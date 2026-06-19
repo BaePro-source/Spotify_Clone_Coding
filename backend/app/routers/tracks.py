@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from sqlalchemy.orm import Session, joinedload
 
 from app.config import settings
@@ -44,6 +44,10 @@ def stream_track(track_id: int, request: Request, db: Session = Depends(get_db))
     track = db.query(Track).filter(Track.id == track_id).first()
     if not track or not track.audio_file_path:
         raise HTTPException(status_code=404, detail="Audio not found")
+
+    # Jamendo 등 외부 URL이면 바로 리다이렉트
+    if track.audio_file_path.startswith("http"):
+        return RedirectResponse(url=track.audio_file_path, status_code=302)
 
     audio_path = Path(settings.audio_upload_dir) / track.audio_file_path
     if not audio_path.exists():

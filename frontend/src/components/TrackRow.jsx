@@ -11,7 +11,7 @@ function formatDuration(secs) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function TrackRow({ track, index, liked: initialLiked = false, onLikeChange }) {
+export default function TrackRow({ track, index, liked: initialLiked = false, onLikeChange, contextTracks }) {
   const { playTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
   const { user } = useAuthStore();
   const [liked, setLiked] = useState(initialLiked);
@@ -24,7 +24,7 @@ export default function TrackRow({ track, index, liked: initialLiked = false, on
     if (isActive) {
       togglePlay();
     } else {
-      playTrack(track);
+      playTrack(track, contextTracks);
     }
   };
 

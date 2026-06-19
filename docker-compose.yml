@@ -17,12 +17,11 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     environment:
+      # Docker 환경에서는 localhost 대신 서비스명(db)을 써야 하므로 여기서 덮어씀
       DATABASE_URL: postgresql://spotify_user:password@db:5432/spotify_db
-      JWT_SECRET: dev-secret-key-replace-before-production
-      JWT_ALGORITHM: HS256
-      JWT_EXPIRE_MINUTES: "10080"
-      AUDIO_UPLOAD_DIR: uploads/audio
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:

@@ -2,17 +2,22 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getPlaylists, createPlaylist } from "../api/playlists";
 import useAuthStore from "../store/authStore";
+import useLangStore, { useT } from "../store/langStore";
 
 export default function Sidebar() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [playlists, setPlaylists] = useState([]);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const { lang, setLang } = useLangStore();
+  const t = useT();
 
   useEffect(() => {
     if (user) {
       getPlaylists().then((r) => setPlaylists(r.data)).catch(() => {});
+    } else {
+      setPlaylists([]);
     }
   }, [user]);
 
@@ -26,13 +31,8 @@ export default function Sidebar() {
     navigate(`/playlist/${data.id}`);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   return (
-    <aside className="flex flex-col w-64 min-h-full bg-black p-4 gap-4 shrink-0">
+    <aside className="flex flex-col w-64 h-full bg-black p-4 gap-4 shrink-0 overflow-hidden">
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2 mb-2">
         <svg viewBox="0 0 24 24" className="w-8 h-8 fill-spotify-green">
@@ -47,33 +47,33 @@ export default function Sidebar() {
           <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
             <path d="M12 3L2 12h3v8h5v-5h4v5h5v-8h3L12 3z" />
           </svg>
-          홈
+          {t.home}
         </Link>
         <Link to="/search" className="flex items-center gap-3 px-2 py-2 rounded text-spotify-muted hover:text-white transition-colors">
           <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
             <path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="currentColor" strokeWidth="2" fill="none" />
           </svg>
-          검색
+          {t.search}
         </Link>
         {user && (
           <Link to="/liked" className="flex items-center gap-3 px-2 py-2 rounded text-spotify-muted hover:text-white transition-colors">
             <svg className="w-5 h-5 fill-spotify-green" viewBox="0 0 24 24">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
-            좋아요한 곡
+            {t.likedSongs}
           </Link>
         )}
       </nav>
 
-      {/* Playlists */}
+      {/* Library */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-2 px-2">
-          <span className="text-xs font-semibold text-spotify-muted uppercase tracking-widest">내 플레이리스트</span>
+          <span className="text-xs font-semibold text-spotify-muted uppercase tracking-widest">{t.myLibrary}</span>
           {user && (
             <button
               onClick={() => setCreating(true)}
               className="text-spotify-muted hover:text-white text-xl leading-none"
-              title="플레이리스트 추가"
+              title={t.addPlaylist}
             >
               +
             </button>
@@ -86,10 +86,10 @@ export default function Sidebar() {
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="이름 입력"
+              placeholder={t.enterName}
               className="flex-1 bg-spotify-card text-white text-sm px-2 py-1 rounded outline-none"
             />
-            <button type="submit" className="text-spotify-green text-sm font-bold">추가</button>
+            <button type="submit" className="text-spotify-green text-sm font-bold">{t.add}</button>
           </form>
         )}
 
@@ -98,29 +98,29 @@ export default function Sidebar() {
             <Link
               key={pl.id}
               to={`/playlist/${pl.id}`}
-              className="block px-2 py-1 text-sm text-spotify-muted hover:text-white truncate transition-colors"
+              className="block px-2 py-1.5 text-sm text-spotify-muted hover:text-white truncate transition-colors"
             >
               {pl.name}
             </Link>
           ))
         ) : (
-          <p className="px-2 text-xs text-spotify-muted">로그인하면 플레이리스트를 만들 수 있어요</p>
+          <p className="px-2 text-xs text-spotify-muted leading-relaxed whitespace-pre-line">
+            {t.loginToCreate}
+          </p>
         )}
       </div>
 
-      {/* User */}
-      <div className="border-t border-spotify-hover pt-4">
-        {user ? (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-white truncate">{user.username}</span>
-            <button onClick={handleLogout} className="text-xs text-spotify-muted hover:text-white">로그아웃</button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <Link to="/login" className="flex-1 text-center py-1 rounded border border-spotify-muted text-white text-sm hover:border-white transition-colors">로그인</Link>
-            <Link to="/register" className="flex-1 text-center py-1 rounded bg-white text-black text-sm font-semibold hover:scale-105 transition-transform">가입</Link>
-          </div>
-        )}
+      {/* Language switcher */}
+      <div className="border-t border-spotify-hover pt-3">
+        <button
+          onClick={() => setLang(lang === "ko" ? "en" : "ko")}
+          className="flex items-center gap-2 text-xs text-spotify-muted hover:text-white transition-colors w-full px-2 py-1"
+        >
+          <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+          </svg>
+          {t.langLabel}
+        </button>
       </div>
     </aside>
   );

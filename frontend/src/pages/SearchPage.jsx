@@ -4,87 +4,64 @@ import { getTracks } from "../api/tracks";
 import { getLikedTracks } from "../api/likes";
 import TrackList from "../components/TrackList";
 import useAuthStore from "../store/authStore";
+import { useT } from "../store/langStore";
 
 export default function SearchPage() {
   const { user } = useAuthStore();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [searchParams] = useSearchParams();
   const [tracks, setTracks] = useState([]);
   const [likedIds, setLikedIds] = useState(new Set());
   const [loading, setLoading] = useState(false);
+  const t = useT();
 
-  const doSearch = async (q) => {
-    if (!q.trim()) {
-      setTracks([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const [tracksRes] = await Promise.all([getTracks(q)]);
-      setTracks(tracksRes.data);
-      if (user) {
-        const { data } = await getLikedTracks();
-        setLikedIds(new Set(data.map((t) => t.id)));
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const query = searchParams.get("q") || "";
 
   useEffect(() => {
-    const q = searchParams.get("q");
-    if (q) {
-      setQuery(q);
-      doSearch(q);
-    }
-  }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSearchParams(query ? { q: query } : {});
-    doSearch(query);
-  };
+    if (!query.trim()) { setTracks([]); return; }
+    setLoading(true);
+    const doSearch = async () => {
+      try {
+        const tracksRes = await getTracks(query);
+        setTracks(tracksRes.data);
+        if (user) {
+          const { data } = await getLikedTracks();
+          setLikedIds(new Set(data.map((t) => t.id)));
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    doSearch();
+  }, [query, user]);
 
   return (
-    <div className="p-6 pb-32">
-      <h1 className="text-2xl font-bold text-white mb-6">검색</h1>
-
-      <form onSubmit={handleSubmit} className="flex gap-3 mb-8">
-        <div className="relative flex-1 max-w-lg">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 fill-spotify-muted" viewBox="0 0 24 24">
-            <path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="currentColor" strokeWidth="2" fill="none" />
+    <div className="p-6 pb-8">
+      {!query && (
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <svg className="w-16 h-16 text-spotify-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="11" cy="11" r="6" /><path d="M21 21l-4.35-4.35" />
           </svg>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="트랙 제목, 아티스트 검색"
-            className="w-full bg-white text-black rounded-full pl-10 pr-4 py-2.5 outline-none text-sm"
-          />
+          <p className="text-spotify-muted text-lg">{t.searchHint}</p>
         </div>
-        <button
-          type="submit"
-          className="px-6 py-2 bg-white text-black rounded-full font-semibold text-sm hover:scale-105 transition-transform"
-        >
-          검색
-        </button>
-      </form>
+      )}
 
-      {loading && <p className="text-spotify-muted">검색 중...</p>}
+      {loading && <p className="text-spotify-muted">{t.searching}</p>}
 
-      {!loading && tracks.length > 0 && (
+      {!loading && query && tracks.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-white mb-3">
-            검색 결과 <span className="text-spotify-muted text-sm">({tracks.length}곡)</span>
+          <h2 className="text-2xl font-bold text-white mb-4">
+            "{query}" {t.searchResultsLabel}
+            <span className="text-spotify-muted text-sm font-normal ml-2">{tracks.length} {t.songs}</span>
           </h2>
           <TrackList tracks={tracks} likedIds={likedIds} />
         </section>
       )}
 
       {!loading && query && tracks.length === 0 && (
-        <p className="text-spotify-muted text-center mt-12">
-          "{query}"에 대한 검색 결과가 없습니다.
-        </p>
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
+          <p className="text-white text-lg font-semibold">{t.noResultsTitle}</p>
+          <p className="text-spotify-muted">"{query}" {t.noResultsDesc}</p>
+        </div>
       )}
     </div>
   );

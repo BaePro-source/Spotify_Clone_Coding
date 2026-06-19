@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
 import useAuthStore from "../store/authStore";
+import { useT } from "../store/langStore";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const t = useT();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ export default function LoginPage() {
       await fetchMe();
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.detail || "로그인 실패");
+      setError(err.response?.data?.detail || t.loginFailed);
     } finally {
       setLoading(false);
     }
@@ -34,46 +36,39 @@ export default function LoginPage() {
             <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-white text-center mb-8">Spotify에 로그인</h1>
+        <h1 className="text-2xl font-bold text-white text-center mb-8">{t.loginTitle}</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm text-white mb-1">이메일</label>
+            <label className="block text-sm text-white mb-1">{t.email}</label>
             <input
-              type="email"
-              required
-              value={form.email}
+              type="email" required value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder={t.emailPlaceholder}
               className="w-full bg-spotify-hover text-white rounded px-3 py-2 outline-none focus:ring-2 focus:ring-spotify-green"
-              placeholder="이메일 주소"
             />
           </div>
           <div>
-            <label className="block text-sm text-white mb-1">비밀번호</label>
+            <label className="block text-sm text-white mb-1">{t.password}</label>
             <input
-              type="password"
-              required
-              value={form.password}
+              type="password" required value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              placeholder={t.passwordPlaceholder}
               className="w-full bg-spotify-hover text-white rounded px-3 py-2 outline-none focus:ring-2 focus:ring-spotify-green"
-              placeholder="비밀번호"
             />
           </div>
 
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-spotify-green text-black font-bold py-3 rounded-full hover:scale-105 transition-transform disabled:opacity-60 mt-2"
-          >
-            {loading ? "로그인 중..." : "로그인"}
+          <button type="submit" disabled={loading}
+            className="w-full bg-spotify-green text-black font-bold py-3 rounded-full hover:scale-105 transition-transform disabled:opacity-60 mt-2">
+            {loading ? t.loggingIn : t.login}
           </button>
         </form>
 
         <p className="text-center text-spotify-muted text-sm mt-6">
-          아직 계정이 없으신가요?{" "}
-          <Link to="/register" className="text-white hover:underline">가입하기</Link>
+          {t.noAccount}{" "}
+          <Link to="/register" className="text-white hover:underline">{t.signupLong}</Link>
         </p>
       </div>
     </div>
