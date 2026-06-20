@@ -70,8 +70,15 @@ const translations = {
     nowPlayingLabel: "지금 재생 중",
     nextUpLabel: "다음 재생",
     emptyQueue: "재생 큐가 비어 있습니다",
+    // 인사말
+    goodMorning: "좋은 아침이에요",
+    goodAfternoon: "좋은 오후에요",
+    goodEvening: "좋은 저녁이에요",
+    goodNight: "좋은 밤이에요",
     // 장르 필터
     genreAll: "전체",
+    showAll: "모두 표시",
+    playlist: "플레이리스트",
     // 아티스트/앨범 페이지
     playAll: "모두 재생",
     topTracks: "인기 트랙",
@@ -150,8 +157,15 @@ const translations = {
     nowPlayingLabel: "Now Playing",
     nextUpLabel: "Next up",
     emptyQueue: "Your queue is empty",
+    // 인사말
+    goodMorning: "Good morning",
+    goodAfternoon: "Good afternoon",
+    goodEvening: "Good evening",
+    goodNight: "Good night",
     // Genre filter
     genreAll: "All",
+    showAll: "Show all",
+    playlist: "Playlist",
     // Artist/Album pages
     playAll: "Play All",
     topTracks: "Popular Tracks",

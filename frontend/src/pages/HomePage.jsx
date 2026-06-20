@@ -8,7 +8,15 @@ import useAuthStore from "../store/authStore";
 import usePlayerStore from "../store/playerStore";
 import { useT } from "../store/langStore";
 
-/* ── 공통 play 버튼 오버레이 ── */
+function getGreeting(t) {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return t.goodMorning;
+  if (h >= 12 && h < 18) return t.goodAfternoon;
+  if (h >= 18 && h < 21) return t.goodEvening;
+  return t.goodNight;
+}
+
+/* ── Play 오버레이 버튼 ── */
 function PlayOverlay({ isActive, isPlaying }) {
   return (
     <div className={`absolute inset-0 bg-black/40 flex items-end justify-end p-3 transition-opacity duration-200 ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
@@ -27,17 +35,54 @@ function PlayOverlay({ isActive, isPlaying }) {
   );
 }
 
-/* ── 인기 상승 곡 카드 ── */
+/* ── 최근 재생 QuickCard ── */
+function QuickCard({ track, allTracks }) {
+  const { playTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
+  const isActive = currentTrack?.id === track.id;
+
+  return (
+    <div
+      className="group flex items-center gap-3 bg-white/10 hover:bg-white/20 rounded-md overflow-hidden cursor-pointer transition-colors relative"
+      onClick={() => isActive ? togglePlay() : playTrack(track, allTracks)}
+    >
+      <div className="w-16 h-16 bg-spotify-card flex items-center justify-center shrink-0 overflow-hidden">
+        {track.album?.cover_url ? (
+          <img src={track.album.cover_url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <svg className="w-6 h-6 fill-spotify-muted" viewBox="0 0 24 24">
+            <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
+          </svg>
+        )}
+      </div>
+      <span className={`text-sm font-bold flex-1 pr-2 truncate ${isActive ? "text-spotify-green" : "text-white"}`}>
+        {track.title}
+      </span>
+      <div className={`absolute right-3 w-10 h-10 rounded-full bg-spotify-green flex items-center justify-center shadow-lg transition-all duration-200 ${isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"}`}>
+        {isActive && isPlaying ? (
+          <svg className="w-4 h-4 fill-black" viewBox="0 0 24 24">
+            <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4 fill-black ml-0.5" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── 트랙 카드 ── */
 function TrackCard({ track, allTracks }) {
   const { playTrack, currentTrack, isPlaying } = usePlayerStore();
   const isActive = currentTrack?.id === track.id;
 
   return (
     <div
-      className="group flex flex-col gap-3 p-3 bg-spotify-card hover:bg-spotify-hover rounded-lg transition-colors cursor-pointer"
+      className="group flex flex-col gap-3 p-3 bg-spotify-dark hover:bg-spotify-card rounded-lg transition-colors cursor-pointer"
       onClick={() => playTrack(track, allTracks)}
     >
-      <div className="relative w-full aspect-square bg-spotify-hover rounded overflow-hidden">
+      <div className="relative w-full aspect-square bg-spotify-card rounded overflow-hidden shadow-md">
         {track.album?.cover_url ? (
           <img src={track.album.cover_url} alt={track.title} className="w-full h-full object-cover" />
         ) : (
@@ -64,9 +109,9 @@ function ArtistCard({ artist }) {
   return (
     <Link
       to={`/artist/${artist.id}`}
-      className="group flex flex-col items-center gap-3 p-3 bg-spotify-card hover:bg-spotify-hover rounded-lg transition-colors"
+      className="group flex flex-col items-center gap-3 p-3 bg-spotify-dark hover:bg-spotify-card rounded-lg transition-colors"
     >
-      <div className="relative w-full aspect-square rounded-full overflow-hidden bg-spotify-hover">
+      <div className="relative w-full aspect-square rounded-full overflow-hidden bg-spotify-card shadow-md">
         {artist.image_url ? (
           <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" />
         ) : (
@@ -79,7 +124,7 @@ function ArtistCard({ artist }) {
       </div>
       <div className="text-center w-full">
         <p className="text-sm font-semibold text-white truncate">{artist.name}</p>
-        <ArtistLabel />
+        <p className="text-xs text-spotify-muted mt-0.5"><ArtistLabel /></p>
       </div>
     </Link>
   );
@@ -90,9 +135,9 @@ function AlbumCard({ album }) {
   return (
     <Link
       to={`/album/${album.id}`}
-      className="group flex flex-col gap-3 p-3 bg-spotify-card hover:bg-spotify-hover rounded-lg transition-colors"
+      className="group flex flex-col gap-3 p-3 bg-spotify-dark hover:bg-spotify-card rounded-lg transition-colors"
     >
-      <div className="relative w-full aspect-square bg-spotify-hover rounded overflow-hidden">
+      <div className="relative w-full aspect-square bg-spotify-card rounded overflow-hidden shadow-md">
         {album.cover_url ? (
           <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover" />
         ) : (
@@ -118,51 +163,31 @@ function AlbumCard({ album }) {
   );
 }
 
+function ArtistLabel() {
+  const t = useT();
+  return <>{t.artist}</>;
+}
+
 /* ── 섹션 헤더 ── */
-function SectionHeader({ title }) {
+function SectionHeader({ title, showAllHref }) {
+  const t = useT();
   return (
     <div className="flex items-center justify-between mb-4">
-      <h2 className="text-2xl font-bold text-white">{title}</h2>
+      <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">{title}</h2>
+      {showAllHref && (
+        <Link to={showAllHref} className="text-xs font-bold text-spotify-muted hover:text-white transition-colors uppercase tracking-wider">
+          {t.showAll}
+        </Link>
+      )}
     </div>
   );
 }
 
-function ArtistLabel() {
-  const t = useT();
-  return <p className="text-xs text-spotify-muted mt-0.5">{t.artist}</p>;
-}
-
-/* ── 6열 그리드 ── */
+/* ── 6열 반응형 카드 그리드 ── */
 function CardGrid({ children }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {children}
-    </div>
-  );
-}
-
-/* ── 최근 재생 빠른 카드 (로그인 시) ── */
-function QuickCard({ track, allTracks }) {
-  const { playTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
-  const isActive = currentTrack?.id === track.id;
-
-  return (
-    <div
-      className="group flex items-center gap-3 bg-spotify-card hover:bg-spotify-hover rounded overflow-hidden cursor-pointer transition-colors"
-      onClick={() => isActive ? togglePlay() : playTrack(track, allTracks)}
-    >
-      <div className="w-16 h-16 bg-spotify-hover flex items-center justify-center shrink-0 relative overflow-hidden">
-        {track.album?.cover_url ? (
-          <img src={track.album.cover_url} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <svg className="w-6 h-6 fill-spotify-muted" viewBox="0 0 24 24">
-            <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
-          </svg>
-        )}
-      </div>
-      <span className={`text-sm font-semibold truncate pr-2 ${isActive ? "text-spotify-green" : "text-white"}`}>
-        {track.title}
-      </span>
     </div>
   );
 }
@@ -175,6 +200,7 @@ export default function HomePage() {
   const [recentTracks, setRecentTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState("all");
+  const t = useT();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -223,94 +249,98 @@ export default function HomePage() {
     ];
   }, [filteredTracks]);
 
-  const t = useT();
-
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-spotify-muted">{t.loading}</div>;
   }
 
   return (
-    <div className="p-6 pb-8">
+    <div className="pb-8">
 
-      {/* 장르 필터 탭 */}
-      {genres.length > 0 && (
-        <div className="mb-8 overflow-x-auto pb-1">
-          <div className="flex gap-2 min-w-max">
-            {["all", ...genres].map((genre) => (
-              <button
-                key={genre}
-                onClick={() => setSelectedGenre(genre)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                  selectedGenre === genre
-                    ? "bg-white text-black"
-                    : "bg-spotify-hover text-white hover:bg-spotify-card"
-                }`}
-              >
-                {genre === "all" ? t.genreAll : genre}
-              </button>
-            ))}
-          </div>
+      {/* ── 인사말 + 최근 재생 (로그인 후) ── */}
+      {user && (
+        <div className="px-6 pt-6 pb-2">
+          <h1 className="text-3xl font-bold text-white mb-6">{getGreeting(t)}</h1>
+
+          {recentTracks.length > 0 && (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-2">
+              {recentTracks.map((track) => (
+                <QuickCard key={track.id} track={track} allTracks={tracks} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* 최근 재생 — 로그인 후에만 */}
-      {user && recentTracks.length > 0 && (
-        <section className="mb-8">
-          <SectionHeader title={t.recentlyPlayed} />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {recentTracks.map((track) => (
-              <QuickCard key={track.id} track={track} allTracks={tracks} />
-            ))}
+      <div className="px-6 pt-6">
+
+        {/* ── 장르 필터 탭 ── */}
+        {genres.length > 0 && (
+          <div className="mb-8 overflow-x-auto pb-1 -mx-1">
+            <div className="flex gap-2 min-w-max px-1">
+              {["all", ...genres].map((genre) => (
+                <button
+                  key={genre}
+                  onClick={() => setSelectedGenre(genre)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                    selectedGenre === genre
+                      ? "bg-white text-black"
+                      : "bg-spotify-hover text-white hover:bg-spotify-card"
+                  }`}
+                >
+                  {genre === "all" ? t.genreAll : genre}
+                </button>
+              ))}
+            </div>
           </div>
-        </section>
-      )}
-
-      {/* 인기 상승 곡 */}
-      {filteredTracks.length > 0 && (
-        <section className="mb-8">
-          <SectionHeader title={t.popularTracks} />
-          <CardGrid>
-            {filteredTracks.slice(0, 6).map((track) => (
-              <TrackCard key={track.id} track={track} allTracks={filteredTracks} />
-            ))}
-          </CardGrid>
-        </section>
-      )}
-
-      {/* 인기 아티스트 */}
-      {filteredArtists.length > 0 && (
-        <section className="mb-8">
-          <SectionHeader title={t.popularArtists} />
-          <CardGrid>
-            {filteredArtists.slice(0, 6).map((artist) => (
-              <ArtistCard key={artist.id} artist={artist} />
-            ))}
-          </CardGrid>
-        </section>
-      )}
-
-      {/* 인기 앨범 */}
-      {filteredAlbums.length > 0 && (
-        <section className="mb-8">
-          <SectionHeader title={t.popularAlbums} />
-          <CardGrid>
-            {filteredAlbums.slice(0, 6).map((album) => (
-              <AlbumCard key={album.id} album={album} />
-            ))}
-          </CardGrid>
-        </section>
-      )}
-
-      {/* 전체 트랙 */}
-      <section>
-        <SectionHeader title={t.allTracks} />
-        {filteredTracks.length > 0 ? (
-          <TrackList tracks={filteredTracks} likedIds={likedIds} />
-        ) : (
-          <p className="text-spotify-muted text-sm py-8 text-center">{t.noResultsTitle}</p>
         )}
-      </section>
 
+        {/* ── 인기 상승 곡 ── */}
+        {filteredTracks.length > 0 && (
+          <section className="mb-8">
+            <SectionHeader title={t.popularTracks} showAllHref="/search" />
+            <CardGrid>
+              {filteredTracks.slice(0, 6).map((track) => (
+                <TrackCard key={track.id} track={track} allTracks={filteredTracks} />
+              ))}
+            </CardGrid>
+          </section>
+        )}
+
+        {/* ── 인기 아티스트 ── */}
+        {filteredArtists.length > 0 && (
+          <section className="mb-8">
+            <SectionHeader title={t.popularArtists} />
+            <CardGrid>
+              {filteredArtists.slice(0, 6).map((artist) => (
+                <ArtistCard key={artist.id} artist={artist} />
+              ))}
+            </CardGrid>
+          </section>
+        )}
+
+        {/* ── 인기 앨범 ── */}
+        {filteredAlbums.length > 0 && (
+          <section className="mb-8">
+            <SectionHeader title={t.popularAlbums} />
+            <CardGrid>
+              {filteredAlbums.slice(0, 6).map((album) => (
+                <AlbumCard key={album.id} album={album} />
+              ))}
+            </CardGrid>
+          </section>
+        )}
+
+        {/* ── 전체 트랙 ── */}
+        <section>
+          <SectionHeader title={t.allTracks} />
+          {filteredTracks.length > 0 ? (
+            <TrackList tracks={filteredTracks} likedIds={likedIds} />
+          ) : (
+            <p className="text-spotify-muted text-sm py-8 text-center">{t.noResultsTitle}</p>
+          )}
+        </section>
+
+      </div>
     </div>
   );
 }
